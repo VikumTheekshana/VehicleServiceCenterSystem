@@ -13,7 +13,7 @@ import {
   BatteryCharging,
   CreditCard,
   QrCode,
-  SlidersHorizontal,
+  ShieldAlert,
   ChevronRight
 } from 'lucide-react';
 
@@ -79,6 +79,13 @@ const navItems = [
     href: '/dashboard/gate-pass',
     icon: QrCode,
     badge: 'EXIT',
+    badgeColor: 'text-rose-400 bg-rose-950/60 border-rose-800',
+  },
+  {
+    name: 'System Admin Console',
+    href: '/dashboard/admin',
+    icon: ShieldAlert,
+    badge: 'CONFIG',
     badgeColor: 'text-rose-400 bg-rose-950/60 border-rose-800',
   },
 ];
@@ -150,8 +157,8 @@ export const Sidebar: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 font-mono">OBD-II CAN Bus</span>
-            <span className="text-cyan-400 font-mono text-[10px]">STANDBY</span>
+            <span className="text-slate-400 font-mono">Super Admin Auth</span>
+            <span className="text-rose-400 font-mono text-[10px]">AUTHORIZED</span>
           </div>
         </div>
       </div>
