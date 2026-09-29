@@ -1,0 +1,266 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  EV
+}
+
+enum JobStatus {
+  DRAFT
+  ESTIMATED
+  APPROVED
+  QUEUED
+  IN_PROGRESS
+  WAITING_PARTS
+  QC_CHECK
+  COMPLETED
+  INVOICED
+}
+
+enum BayType {
+  TWO_POST
+  FOUR_POST
+  ALIGNMENT
+  EV_ISOLATED
+  WASH_BAY
+  QUICK_LUBE
+}
+
+enum ItemType {
+  PART
+  LABOR
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  CREDIT_APPROVED
+}
+
+enum DispenseStatus {
+  AUTHORIZED
+  COMPLETED
+  ABORTED
+}
+
+model Customer {
+  id                 String    @id @default(uuid())
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
+  phoneNumber        String    @unique @map("phone_number")
+  email              String?
+  isCorporateAccount Boolean   @default(false) @map("is_corporate_account")
+  creditLimit        Float     @default(0.00) @map("credit_limit")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  vehicles           Vehicle[]
+  jobCards           JobCard[]
+
+  @@map("customers")
+}
+
+model Vehicle {
+  id                  String             @id @default(uuid())
+  customerId          String             @map("customer_id")
+  licensePlate        String             @unique @map("license_plate")
+  vinNumber           String?            @unique @map("vin_number")
+  make                String
+  model               String
+  modelYear           Int?               @map("model_year")
+  fuelType            FuelType           @map("fuel_type")
+  engineCapacityCc    Int?               @map("engine_capacity_cc")
+  recommendedOilGrade String?            @map("recommended_oil_grade")
+  oilCapacityLiters   Float?             @map("oil_capacity_liters")
+  currentOdometer     Int                @default(0) @map("current_odometer")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+
+  customer            Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobCards            JobCard[]
+  batteryPassports    EVBatteryPassport[]
+  gatePasses          GatePass[]
+
+  @@map("vehicles")
+}
+
+model WorkshopBay {
+  id           String      @id @default(uuid())
+  bayName      String      @map("bay_name")
+  bayType      BayType     @map("bay_type")
+  isOccupied   Boolean     @default(false) @map("is_occupied")
+  currentJobId String?     @map("current_job_id")
+  hourlyRate   Float       @default(0.00) @map("hourly_rate")
+
+  jobCards     JobCard[]
+
+  @@map("workshop_bays")
+}
+
+model JobCard {
+  id                   String               @id @default(uuid())
+  jobNumber            String               @unique @map("job_number")
+  vehicleId            String               @map("vehicle_id")
+  customerId           String               @map("customer_id")
+  assignedBayId        String?              @map("assigned_bay_id")
+  assignedTechnicianId String?              @map("assigned_technician_id")
+  status               JobStatus            @default(DRAFT)
+  intakeOdometer       Int                  @map("intake_odometer")
+  customerNotes        String?              @map("customer_notes")
+  technicianVoiceNotes String?              @map("technician_voice_notes")
+  customerApprovedAt   DateTime?            @map("customer_approved_at")
+  estimatedDeliveryAt  DateTime?            @map("estimated_delivery_at")
+  completedAt          DateTime?            @map("completed_at")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  vehicle              Vehicle              @relation(fields: [vehicleId], references: [id])
+  customer             Customer             @relation(fields: [customerId], references: [id])
+  assignedBay          WorkshopBay?         @relation(fields: [assignedBayId], references: [id])
+  
+  aiInspection         AIDamageInspection?
+  jobCardItems         JobCardItem[]
+  iotDispenseLogs      IoTFluidDispenseLog[]
+  batteryPassport      EVBatteryPassport?
+  invoice              Invoice?
+
+  @@map("job_cards")
+}
+
+model AIDamageInspection {
+  id                 String   @id @default(uuid())
+  jobCardId          String   @unique @map("job_card_id")
+  anprPlateDetected  String   @map("anpr_plate_detected")
+  anprConfidence     Float    @map("anpr_confidence")
+  detectedDamages    Json     @map("detected_damages") // [{type: 'SCRATCH', confidence: 0.94, coords: {x, y}, mesh_id}]
+  treadDepthMm       Json     @map("tread_depth_mm")   // {front_left: 4.2, front_right: 4.1, rear_left: 2.1, rear_right: 2.0}
+  snapshotUrls       String[] @default([]) @map("snapshot_urls")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  jobCard            JobCard  @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+
+  @@map("ai_damage_inspections")
+}
+
+model InventoryItem {
+  id              String                @id @default(uuid())
+  partNumber      String                @unique @map("part_number")
+  name            String
+  category        String
+  isBulkFluid     Boolean               @default(false) @map("is_bulk_fluid")
+  currentStock    Float                 @default(0.00) @map("current_stock")
+  unitOfMeasure   String                @default("UNIT") @map("unit_of_measure")
+  reorderLevel    Float                 @default(5.00) @map("reorder_level")
+  unitCost        Float                 @map("unit_cost")
+  unitPrice       Float                 @map("unit_price")
+  binLocation     String?               @map("bin_location")
+
+  jobCardItems    JobCardItem[]
+  iotDispenseLogs IoTFluidDispenseLog[]
+
+  @@map("inventory_items")
+}
+
+model JobCardItem {
+  id                   String         @id @default(uuid())
+  jobCardId            String         @map("job_card_id")
+  itemType             ItemType       @map("item_type")
+  inventoryItemId      String?        @map("inventory_item_id")
+  serviceCode          String?        @map("service_code")
+  description          String
+  quantity             Float          @default(1.00)
+  unitPrice            Float          @map("unit_price")
+  totalAmount          Float          @map("total_amount")
+  isApprovedByCustomer Boolean        @default(false) @map("is_approved_by_customer")
+  createdAt            DateTime       @default(now()) @map("created_at")
+
+  jobCard              JobCard        @relation(fields: [jobCardId], references: [id], onDelete: Cascade)
+  inventoryItem        InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
+  @@map("job_card_items")
+}
+
+model IoTFluidDispenseLog {
+  id                 String         @id @default(uuid())
+  jobCardId          String         @map("job_card_id")
+  inventoryItemId    String         @map("inventory_item_id")
+  dispenserDeviceId  String         @map("dispenser_device_id")
+  authorizedLiters   Float          @map("authorized_liters")
+  dispensedLiters    Float          @map("dispensed_liters")
+  pulseCount         Int            @map("pulse_count")
+  kFactor            Float          @map("k_factor")
+  status             DispenseStatus @default(AUTHORIZED)
+  dispensedAt        DateTime       @default(now()) @map("dispensed_at")
+
+  jobCard            JobCard        @relation(fields: [jobCardId], references: [id])
+  inventoryItem      InventoryItem  @relation(fields: [inventoryItemId], references: [id])
+
+  @@map("iot_fluid_dispense_logs")
+}
+
+model EVBatteryPassport {
+  id                          String   @id @default(uuid())
+  jobCardId                   String   @unique @map("job_card_id")
+  vehicleId                   String   @map("vehicle_id")
+  stateOfHealthPct            Float    @map("state_of_health_pct")
+  stateOfChargePct            Float    @map("state_of_charge_pct")
+  cellVoltageDeltaMv          Float    @map("cell_voltage_delta_mv")
+  packInternalResistanceMohm  Float?   @map("pack_internal_resistance_mohm")
+  inverterTempCelsius         Float?   @map("inverter_temp_celsius")
+  diagnosticSummary           String   @map("diagnostic_summary")
+  certificateHash             String   @unique @map("certificate_hash")
+  issuedAt                    DateTime @default(now()) @map("issued_at")
+
+  jobCard                     JobCard  @relation(fields: [jobCardId], references: [id])
+  vehicle                     Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  @@map("ev_battery_passports")
+}
+
+model Invoice {
+  id                String        @id @default(uuid())
+  invoiceNumber     String        @unique @map("invoice_number")
+  jobCardId         String        @unique @map("job_card_id")
+  totalLaborAmount  Float         @default(0.00) @map("total_labor_amount")
+  totalPartsAmount  Float         @default(0.00) @map("total_parts_amount")
+  taxAmount         Float         @default(0.00) @map("tax_amount")
+  discountAmount    Float         @default(0.00) @map("discount_amount")
+  netTotal          Float         @map("net_total")
+  paymentStatus     PaymentStatus @default(UNPAID) @map("payment_status")
+  paymentMethod     String?       @map("payment_method")
+  paidAt            DateTime?     @map("paid_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  jobCard           JobCard       @relation(fields: [jobCardId], references: [id])
+  gatePass          GatePass?
+
+  @@map("invoices")
+}
+
+model GatePass {
+  id               String    @id @default(uuid())
+  gatePassNumber   String    @unique @map("gate_pass_number")
+  invoiceId        String    @unique @map("invoice_id")
+  vehicleId        String    @map("vehicle_id")
+  qrTokenHash      String    @unique @map("qr_token_hash")
+  expiresAt        DateTime  @map("expires_at")
+  scannedAt        DateTime? @map("scanned_at")
+  scannedByGuardId String?   @map("scanned_by_guard_id")
+  isCleared        Boolean   @default(false) @map("is_cleared")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  invoice          Invoice   @relation(fields: [invoiceId], references: [id])
+  vehicle          Vehicle   @relation(fields: [vehicleId], references: [id])
+
+  @@map("gate_passes")
+}
