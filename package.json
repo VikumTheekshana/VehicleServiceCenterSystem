@@ -1,0 +1,32 @@
+{
+  "name": "autoos-vehicle-service-center-system",
+  "version": "1.0.0",
+  "description": "Next-Gen Enterprise Vehicle Service Center Management System with Edge AI, IoT, and Voice Assistant",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm --prefix apps/backend run start:dev",
+    "dev:dashboard": "npm --prefix apps/web-dashboard run dev",
+    "build": "npm --prefix apps/backend run build && npm --prefix apps/web-dashboard run build",
+    "test": "npm --prefix apps/backend test",
+    "db:migrate": "npm --prefix packages/database run migrate",
+    "db:seed": "npm --prefix packages/database run seed"
+  },
+  "keywords": [
+    "vehicle-service-center",
+    "workshop-management",
+    "edge-ai",
+    "anpr",
+    "yolov8",
+    "iot-dispenser",
+    "battery-passport",
+    "nestjs",
+    "nextjs",
+    "postgresql"
+  ],
+  "author": "Vikum Theekshana Dahanayake <vikumdahanayake5959@gmail.com>",
+  "license": "MIT"
+}
