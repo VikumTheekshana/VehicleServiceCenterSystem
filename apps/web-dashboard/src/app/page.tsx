@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { api } from '@/lib/api';
+import { useAuth, logoutUser } from '@/lib/auth';
 import {
   Wrench,
   ScanEye,
@@ -19,10 +20,31 @@ import {
   Database,
   Cpu,
   Layers,
-  Sparkles
+  Sparkles,
+  LogIn,
+  UserPlus,
+  Shield,
+  User,
+  LogOut,
 } from 'lucide-react';
 
 const roles = [
+  {
+    title: 'System Administrator',
+    badge: 'GOVERNANCE',
+    desc: 'Bay tariffs ($/hr), technician staff management, hardware IoT node health, and ISO 27001 forensic audit trails.',
+    href: '/dashboard/admin',
+    icon: ShieldCheck,
+    color: 'from-red-500/20 to-rose-500/10 border-red-500/40 text-red-400',
+  },
+  {
+    title: 'Operations Director',
+    badge: 'COMMAND CENTER',
+    desc: 'Constraint-based bay solver, live Kanban rebalance, split billing, and technician utilization.',
+    href: '/dashboard',
+    icon: Activity,
+    color: 'from-sky-500/20 to-cyan-500/10 border-sky-500/40 text-sky-400',
+  },
   {
     title: 'Service Advisor',
     badge: 'FRONT DESK',
@@ -56,14 +78,6 @@ const roles = [
     color: 'from-amber-500/20 to-orange-500/10 border-amber-500/40 text-amber-400',
   },
   {
-    title: 'Operations Director',
-    badge: 'COMMAND CENTER',
-    desc: 'Constraint-based bay solver, live Kanban rebalance, split billing, and technician utilization.',
-    href: '/dashboard',
-    icon: Activity,
-    color: 'from-sky-500/20 to-cyan-500/10 border-sky-500/40 text-sky-400',
-  },
-  {
     title: 'Security Gate Officer',
     badge: 'GATE EXIT',
     desc: 'Cryptographic QR Gate Pass scanner, invoice settlement verification, and boom barrier trigger.',
@@ -76,6 +90,7 @@ const roles = [
 export default function LandingPortal() {
   const [healthStatus, setHealthStatus] = useState<any>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     api
@@ -101,9 +116,9 @@ export default function LandingPortal() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Logo size="lg" />
 
-          {/* Engine Status Meter */}
+          {/* Engine Status & Auth Actions */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-mono">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${
                   healthStatus?.status === 'HEALTHY'
@@ -119,6 +134,44 @@ export default function LandingPortal() {
                   : 'OFFLINE MODE'}
               </span>
             </div>
+
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-xs font-mono text-cyan-300 transition"
+                >
+                  <User className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="truncate max-w-[120px]">{user.name.split(' ')[0]}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={logoutUser}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-950/30 border border-rose-800/60 hover:bg-rose-900/40 text-rose-400 text-xs font-mono transition cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">LOGOUT</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-200 transition"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>SIGN IN</span>
+                </Link>
+                <Link
+                  href="/register"
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-200 transition"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                  <span>REGISTER</span>
+                </Link>
+              </div>
+            )}
 
             <Link
               href="/dashboard"
@@ -153,6 +206,24 @@ export default function LandingPortal() {
           Unifying Drive-Thru AI Gate Scanners, Ambient Voice-to-Job assistants, Constraint Satisfaction Bay Scheduling, IoT Zero-Theft Fluid Dispensing, and EV Battery Health Passports into a single real-time command mesh.
         </p>
 
+        {/* Auth CTA Banner */}
+        <div className="mt-8 flex items-center gap-3">
+          <Link
+            href="/login"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-sm tracking-wide shadow-xl shadow-cyan-500/20 transition transform hover:scale-[1.02]"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>AUTHENTICATE & SIGN IN (7 ROLES)</span>
+          </Link>
+          <Link
+            href="/register"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-200 font-semibold text-sm tracking-wide transition"
+          >
+            <UserPlus className="w-4 h-4 text-cyan-400" />
+            <span>REGISTER NEW STAFF</span>
+          </Link>
+        </div>
+
         {/* Live Hardware & Core Stack Indicators */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-slate-400">
           <span className="px-3 py-1 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center gap-1.5">
@@ -185,7 +256,7 @@ export default function LandingPortal() {
               </p>
             </div>
             <span className="hidden sm:inline text-xs font-mono text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-800">
-              6 ROLES CONFIGURED
+              7 ROLES CONFIGURED
             </span>
           </div>
 

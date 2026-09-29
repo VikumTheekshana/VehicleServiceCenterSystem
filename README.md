@@ -246,9 +246,17 @@ graph TD
 * **Anti-Fraud Security Token:** Generates a time-bound HMAC-SHA256 encrypted payload signed with master server secret.
 * **Automated GPIO Actuation:** Scanned by gate officer's tablet; system verifies complete payment settlement and sends MQTT trigger to energize barrier relay for 15 seconds.
 
+### 9. Enterprise Zero-Trust Authentication & Session Control (JWT + Bcrypt)
+* **Bcrypt Hash Verification:** All staff and executive passwords are encrypted with salted **bcrypt (10 rounds)** before hitting PostgreSQL.
+* **Stateless JWT Authorization:** Protected routes verify cryptographic Bearer JWT tokens with signed user ID, email, role, and expiration timestamps.
+* **1-Click Interactive Persona Switcher:** The `/login` portal includes 1-click quick-fill buttons for all 7 workshop roles for instant testing without typing credentials.
+* **Personnel Self-Registration:** Certified technicians and managers can enroll via `/register` with assigned workshop roles.
+
 ---
 
-## 🔑 Pre-Seeded Demo Credentials (Instant 1-Click Role Switcher)
+## 🔑 Pre-Seeded Demo Credentials & Access Portals
+
+AutoOS provides full role-based access control with pre-seeded accounts across all 7 operational roles:
 
 | Role | Email | Password | Dedicated Route | Access Scope |
 |---|---|---|---|---|
@@ -260,7 +268,8 @@ graph TD
 | **Fluid & Parts Storekeeper** | `storekeeper@autoos.workshop` | `Store@123` | `/dashboard/dispenser` | ESP32 fluid dispenser, oil drums & zero-theft ledger |
 | **Security Gate Officer** | `security@autoos.workshop` | `Gate@123` | `/dashboard/gate-pass` | Cryptographic QR scanner & boom barrier control |
 
-> **Interactive Role Switcher:** Access `http://localhost:3030` and click on any pre-seeded persona button to test that user's view and permissions instantly!
+> **Sign In Portal:** Visit **[http://localhost:3030/login](http://localhost:3030/login)** to sign in or click any persona button to auto-fill credentials instantly!  
+> **Staff Registration Portal:** Visit **[http://localhost:3030/register](http://localhost:3030/register)** to enroll new personnel with customized workshop roles!
 
 ---
 
@@ -317,6 +326,8 @@ npm run build
 npm run start
 ```
 * **Workshop Web Portal:** `http://localhost:3030`
+* **Sign In Portal:** `http://localhost:3030/login`
+* **Staff Registration:** `http://localhost:3030/register`
 
 ### Step 6: (Optional) Launch Python YOLOv8 Edge Vision Service (:8080)
 ```bash
@@ -356,7 +367,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080
 
 | Module | Method | Endpoint Path | Description | Access Level |
 |---|---|---|---|---|
-| **Auth** | `POST` | `/api/auth/login` | Issues JWT session token & role payload | Public |
+| **Auth** | `POST` | `/api/auth/register` | Enrolls new workshop staff member with role & bcrypt hash | Public |
+| **Auth** | `POST` | `/api/auth/login` | Validates credentials & issues signed JWT session token | Public |
+| **Auth** | `POST` | `/api/auth/logout` | Terminates active user session | Public |
+| **Auth** | `GET` | `/api/auth/me` | Retrieves authenticated user profile & permissions | Bearer JWT |
+| **Auth** | `GET` | `/api/auth/users` | Lists all registered workshop staff members | Bearer JWT (Admin) |
 | **Gate Scanner** | `POST` | `/api/vehicles/scan` | Ingests camera image, runs ANPR & damage polygons | Service Advisor |
 | **Inspections** | `GET` | `/api/inspections` | Lists all intake inspection sheets & estimates | Service Advisor |
 | **Job Cards** | `GET` | `/api/job-cards` | Retrieves all active job cards across workshop | All Roles |

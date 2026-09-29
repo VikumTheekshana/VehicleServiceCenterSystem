@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
+// Auth Module
+import { AuthModule } from './modules/auth/auth.module';
+
 // Telemetry Gateway
 import { TelemetryGateway } from './modules/telemetry/telemetry.gateway';
 
@@ -38,7 +41,7 @@ import { VehiclesService } from './modules/vehicles/vehicles.service';
 import { HealthController } from './modules/health/health.controller';
 
 @Module({
-  imports: [],
+  imports: [AuthModule],
   controllers: [
     HealthController,
     WorkshopBaysController,

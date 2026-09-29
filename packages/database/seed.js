@@ -1,8 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting AutoOS PostgreSQL database seeding...');
+  console.log('🚀 Starting AutoOS PostgreSQL database seeding...');
 
   // Clean existing tables in reverse dependency order
   await prisma.gatePass.deleteMany();
@@ -16,8 +17,78 @@ async function main() {
   await prisma.vehicle.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.inventoryItem.deleteMany();
+  await prisma.user.deleteMany();
 
-  console.log('🧹 Cleaned existing database records.');
+  console.log('✅ Cleaned existing database records.');
+
+  // 0. Seed Users & Personas with Bcrypt Hashes
+  const defaultSaltRounds = 10;
+  const usersToSeed = [
+    {
+      name: 'Vikum Theekshana (System Administrator)',
+      email: 'admin@autoos.workshop',
+      password: 'Admin@12345',
+      role: 'SUPER_ADMIN',
+      phone: '+94770000001',
+    },
+    {
+      name: 'Samantha Silva (Operations Director)',
+      email: 'director@autoos.workshop',
+      password: 'Director@123',
+      role: 'DIRECTOR',
+      phone: '+94770000002',
+    },
+    {
+      name: 'Nimal Perera (Service Advisor)',
+      email: 'advisor@autoos.workshop',
+      password: 'Advisor@123',
+      role: 'SERVICE_ADVISOR',
+      phone: '+94770000003',
+    },
+    {
+      name: 'Kasun Fernando (Master Technician)',
+      email: 'technician@autoos.workshop',
+      password: 'Tech@123',
+      role: 'TECHNICIAN',
+      phone: '+94770000004',
+    },
+    {
+      name: 'Dr. Dinesh Jayawardena (HV/EV Diagnostics)',
+      email: 'ev-specialist@autoos.workshop',
+      password: 'EvExpert@123',
+      role: 'EV_SPECIALIST',
+      phone: '+94770000005',
+    },
+    {
+      name: 'Sunil Wickramasinghe (Fluid & Inventory)',
+      email: 'storekeeper@autoos.workshop',
+      password: 'Store@123',
+      role: 'STOREKEEPER',
+      phone: '+94770000006',
+    },
+    {
+      name: 'Ranjith Bandara (Security Gate Officer)',
+      email: 'security@autoos.workshop',
+      password: 'Gate@123',
+      role: 'SECURITY_GUARD',
+      phone: '+94770000007',
+    },
+  ];
+
+  for (const u of usersToSeed) {
+    const passwordHash = await bcrypt.hash(u.password, defaultSaltRounds);
+    await prisma.user.create({
+      data: {
+        name: u.name,
+        email: u.email,
+        passwordHash,
+        role: u.role,
+        phone: u.phone,
+        isActive: true,
+      },
+    });
+  }
+  console.log('✅ Seeded 7 Workshop Staff & Executive User Accounts.');
 
   // 1. Workshop Bays
   const bay1 = await prisma.workshopBay.create({
@@ -379,7 +450,7 @@ async function main() {
       detectedDamages: [],
       treadDepthMm: {
         frontLeft: 5.4,
-        frontRight: 4.1, // Uneven wear triggering alignment suggestion!
+        frontRight: 4.1,
         rearLeft: 6.0,
         rearRight: 6.1,
       },
@@ -436,7 +507,7 @@ async function main() {
       jobCardId: jobCard3.id,
       totalLaborAmount: 8500.00,
       totalPartsAmount: 9200.00,
-      taxAmount: 2655.00, // 15% VAT
+      taxAmount: 2655.00,
       discountAmount: 0.00,
       netTotal: 20355.00,
       paymentStatus: 'PAID',
@@ -451,7 +522,7 @@ async function main() {
       invoiceId: invoice3.id,
       vehicleId: vehicle3.id,
       qrTokenHash: 'HMAC-SHA256-AUTOOS-GP-TOKEN-9892013-SECURE',
-      expiresAt: new Date(Date.now() + 3600000 * 24), // 24 hours validity
+      expiresAt: new Date(Date.now() + 3600000 * 24),
       isCleared: false,
     },
   });
