@@ -159,7 +159,7 @@ graph TD
   <img src="docs/screenshots/08_ev_battery_passport.png" alt="EV Battery Health Passport" width="100%" style="border-radius: 8px; border: 1px solid #1e293b;" />
 </p>
 
-* **96-Cell Interactive Voltage & Thermal Matrix:** Direct CAN-bus telemetry visualization displaying state of charge (SoC), state of health (SoH), internal resistance ($m\Omega$), and maximum cell delta voltage ($\Delta V \le 18\text{mV}$).
+* **96-Cell Interactive Voltage & Thermal Matrix:** Direct CAN-bus telemetry visualization displaying state of charge (SoC), state of health (SoH), internal resistance (mΩ), and maximum cell delta voltage (ΔV ≤ 18 mV).
 * **Degradation Analytics & Certificate:** Automatically generates a SHA-256 tamper-proof EV Battery Health Passport for second-hand vehicle valuation and warranty claims.
 
 </details>
@@ -198,7 +198,7 @@ graph TD
   <img src="docs/screenshots/11_system_admin_console.png" alt="System Admin Console" width="100%" style="border-radius: 8px; border: 1px solid #1e293b;" />
 </p>
 
-* **Multi-Tab Governance Suite:** Manage staff credentials, technician skills, dynamic bay hourly tariffs ($/hr), and hardware IoT node heartbeats from a single unified portal.
+* **Multi-Tab Governance Suite:** Manage staff credentials, technician skills, dynamic bay hourly tariffs (USD/LKR per hr), and hardware IoT node heartbeats from a single unified portal.
 * **ISO 27001 Forensic Audit Trail:** Immutable security ledger logging every administrative privilege escalation, fluid dispense bypass, and financial balance override with actor IP and timestamps.
 
 </details>
@@ -214,18 +214,24 @@ graph TD
 
 ### 2. Finite State Machine (7-Stage FSM) Job Card Lifecycle
 * **Strict Linear Progression:** Zero possibility of unbilled or uninspected vehicle departures. Enforces:
-  $$\text{INTAKE} \longrightarrow \text{ESTIMATE} \longrightarrow \text{SCHEDULED} \longrightarrow \text{IN\_PROGRESS} \longrightarrow \text{QC} \longrightarrow \text{INVOICED} \longrightarrow \text{RELEASED}$$
+  ```text
+  INTAKE ➔ ESTIMATE ➔ SCHEDULED ➔ IN_PROGRESS ➔ QC_CHECK ➔ INVOICED ➔ RELEASED
+  ```
 * **Role-Gated Transitions:** Only Certified Technicians can advance jobs to QC; only Billing Officers can transition from QC to Invoiced; only verified payment can unlock Gate Release.
 
 ### 3. Constraint-Based Dynamic Bay Scheduling Matrix
 * **Constraint Satisfaction Algorithm:** Solves the multi-variable workshop scheduling problem:
-  $$\max \sum (\text{Bay Throughput}) \quad \text{subject to} \quad \text{Bay Capability} \supseteq \text{Job Requirements}$$
+  ```text
+  Maximize: Bay Throughput  |  Subject to: Bay Capabilities ⊇ Job Requirements
+  ```
 * **Specialized Bay Matchmaking:** Guarantees EV battery diagnostics only assign to 1000V isolated bays with master high-voltage technicians; alignment jobs only assign to 4-post sensor-calibrated pits.
 
 ### 4. IoT Zero-Theft Fluid Dispenser & Solenoid Pulse Verification
 * **Hardware-Gated Fluid Release:** Solenoid valve remains locked in default de-energized state.
 * **Target Volume Limiter:** The ESP32 MCU receives target volume over MQTT, energizes relay (GPIO 18), counts high-frequency pulses from turbine flow sensor (GPIO 19), and cuts power immediately upon hitting calibrated target:
-  $$\text{Target Pulses} = \text{Volume (L)} \times 450\text{ pulses/L}$$
+  ```text
+  Target Pulses = Volume (Liters) × 450 pulses/L
+  ```
 * **Pulse Ledger Verification:** Any pulse detected outside an authorized job triggers a high-priority security theft alarm in the Admin Console.
 
 ### 5. Ambient Voice-to-Job Hands-Free Mechanic Assistant
@@ -233,9 +239,11 @@ graph TD
 * **Fast NLP Intent Parser:** Transcribes ambient voice stream and runs regex & intent extraction to parse labor operations, hours, and OEM parts catalogue numbers.
 
 ### 6. EV/Hybrid Battery Health Passport & 96-Cell Thermal Heatmap
-* **Cell Voltage Imbalance Monitoring:** Evaluates maximum deviation:
-  $$\Delta V = V_{\max} - V_{\min}$$
-  Flags warning when $\Delta V > 25\text{mV}$ and critical pack shutdown when $\Delta V > 50\text{mV}$.
+* **Cell Voltage Imbalance Monitoring:** Evaluates maximum cell deviation:
+  ```text
+  ΔV = V_max - V_min
+  ```
+  Flags warning when `ΔV > 25 mV` and critical pack shutdown when `ΔV > 50 mV`.
 * **Cryptographic Passport Issuance:** Generates a SHA-256 digital certificate validating battery health, total discharge cycles, and DC fast-charging thermal stress history.
 
 ### 7. Insurance Split-Billing Engine & Automated PDF Invoicing
@@ -357,7 +365,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080
 | ESP32 Pin | Direction | Connected Peripheral | Logic Level | Operating Description |
 |---|---|---|---|---|
 | **GPIO 18** | Output | Optocoupled 12V Relay | Active LOW | Energizes brass solenoid valve when authorized |
-| **GPIO 19** | Input (Pull-up) | Hall-Effect Turbine Sensor | Digital Pulses | Counts turbine rotations ($450\text{ pulses / liter}$) |
+| **GPIO 19** | Input (Pull-up) | Hall-Effect Turbine Sensor | Digital Pulses | Counts turbine rotations (450 pulses / liter) |
 | **GPIO 21** | Output | Status Indicator LED | Active HIGH | Illuminates while fluid is dispensing |
 | **GPIO 26** | Output | Boom Barrier Gate Relay | 15s Momentary | Triggers physical exit boom barrier motor |
 
